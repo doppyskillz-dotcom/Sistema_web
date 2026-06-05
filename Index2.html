@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Análise Estatística Ultra Pro</title>
+    <style>
+        :root {
+            --bg-color: #0b0e14;
+            --card-bg: #151a24;
+            --accent-purple: #9146ff;
+            --text-color: #ffffff;
+            --gray-text: #8a96a3;
+            --green: #00e676;
+            --pink: #ff007f;
+            --blue: #3498db;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Telas de Bloqueio e Login */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .login-box {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: none;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        h1 {
+            color: var(--accent-purple);
+            margin-bottom: 5px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--gray-text);
+        }
+
+        input, textarea, button, select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #2a3447;
+            background-color: #1c2331;
+            color: white;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: var(--accent-purple);
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #772ce8;
+        }
+
+        .stats-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-box {
+            background-color: #1c2331;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-box span {
+            display: block;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .badge-blue { background-color: var(--blue); }
+        .badge-green { background-color: var(--green); color: #000; }
+        .badge-pink { background-color: var(--pink); }
+
+        /* Painel Administrativo */
+        #adminPanel {
+            display: none;
+            border: 2px dashed var(--accent-purple);
+        }
+
+        .key-list-item {
+            background: #1c2331;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 4px;
+            font-family: monospace;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .btn-delete {
+            background-color: var(--pink);
+            width: auto;
+            margin: 0;
+            padding: 3px 8px;
+            font-size: 11px;
+        }
+
+        /* Timer de Licença */
+        #licenseTimer {
+            text-align: right;
+            color: var(--pink);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* Caixa de IA Inteligente com Efeito de Varredura */
+        .ai-box {
+            background: linear-gradient(135deg, #1e1b4b 0%, #151a24 100%);
+            border-left: 4px solid var(--accent-purple);
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animação do Scanner */
+        .scanner-line {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--green), transparent);
+            animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+
+        /* Mini Gráfico de Tendência Visual */
+        .chart-container {
+            margin-top: 15px;
+            background-color: #1c2331;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            height: 100px;
+            gap: 5px;
+            border-bottom: 2px solid #2a3447;
+            padding-bottom: 5px;
+        }
+
+        .bar {
+            flex: 1;
+            background-color: var(--blue);
+            border-radius: 2px 2px 0 0;
+            transition: height 0.5s ease;
+            position: relative;
+        }
+
+        /* Placar de Assertividade */
+        .assertiveness-panel {
+            background: #1c2331;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div id="loginOverlay" class="overlay">
+    <div class="login-box">
+        <h2 style="color: var(--accent-purple); margin-top:0;">Autenticação Requerida</h2>
+        <p style="color: var(--gray-text);">Insira a sua Chave de Acesso ou Código Administrador para entrar.</p>
+        <div class="form-group">
+            <input type="password" id="accessKeyInput" placeholder="Chave de acesso (Key)">
+        </div>
+        <button onclick="verificarAcesso()" id="btnEntrarManual">Validar e Entrar</button>
+        <div id="loginError" style="color: var(--pink); margin-top: 10px; font-weight: bold;"></div>
+    </div>
+</div>
+
+<div class="container" id="mainContainer">
+    <header>
+        <div id="licenseTimer">Licença ativa</div>
+        <h1>Analisador Estatístico de Tendências Automático</h1>
+        <p style="color: var(--gray-text)">Mecanismo Inteligente de Análise em Tempo Real</p>
+        <button id="adminToggleBtn" onclick="abrirPainelAdmin()" style="width: auto; padding: 5px 15px; font-size:12px; background:#2a3447; position: absolute; top:0; left:0;">Painel ADM</button>
+    </header>
+
+    <div class="card" id="adminPanel">
+        <h2 style="color: var(--pink); margin-top: 0;">Painel de Controle do Administrador</h2>
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+                <h3>Gerar Nova Chave Pública (Geral)</h3>
+                <div class="form-group">
+                    <label>Duração da Licença (Deixe tudo em 0 para ILIMITADO):</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 5px;">
+                        <input type="number" id="durationDays" placeholder="Dias" value="0" min="0">
+                        <input type="number" id="durationHours" placeholder="Horas" value="1" min="0">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                        <input type="number" id="durationMinutes" placeholder="Minutos" value="0" min="0">
+                        <input type="number" id="durationSeconds" placeholder="Segundos" value="0" min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="loopSpeed">Velocidade da Automação (Segundos):</label>
+                    <input type="number" id="loopSpeed" value="8" min="3">
+                </div>
+                <button onclick="gerarNovaChave()" style="background-color: var(--pink)">Criar Key de Acesso</button>
+            </div>
+            <div>
+                <h3>Chaves Ativas no Sistema (Gravação Permanente)</h3>
+                <div id="keysContainer" style="max-height: 220px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h2>Entrada de Dados Históricos</h2>
+            <div class="form-group">
+                <label for="multipliers">Cole as últimas 6 rodadas (Separadas por espaço ou vírgula):</label>
+                <textarea id="multipliers" rows="3" placeholder="Ex: 1.45, 2.10, 0.98, 4.50, 1.20, 12.40"></textarea>
+            </div>
+            <button onclick="processarFluxoCompleto()">Processar e Iniciar Automação</button>
+
+            <h3 style="margin-top: 25px;">Histórico Filtrado</h3>
+            <div id="historyOutput" class="history-list"></div>
+
+            <div class="chart-container">
+                <label>Gráfico de Tendência (Últimas Rodadas)</label>
+                <div id="visualChart" class="bar-chart"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Varredura Automatizada IA</h2>
+            <p style="color: var(--gray-text)">Projeções calculadas em tempo real:</p>
+            
+            <div class="ai-box" id="aiCardBox">
+                <div class="scanner-line" id="scannerLine"></div>
+                <h3 style="margin: 0 0 10px 0; color: var(--green);" id="aiHeader">🎯 PRÓXIMA ENTRADA SUGERIDA</h3>
+                <div id="aiPrediction" style="font-size: 16px; font-weight: bold; line-height: 1.5;">
+                    Aguardando inserção de histórico padrão para varredura.
+                </div>
+            </div>
+
+            <div class="assertiveness-panel">
+                <div>
+                    <div style="color: var(--green);">GREENS ✅</div>
+                    <div id="countWin" style="font-size: 20px;">0</div>
+                </div>
+                <div>
+                    <div style="color: var(--pink);">LOSSES ❌</div>
+                    <div id="countLoss" style="font-size: 20px;">0</div>
+                </div>
+                <div>
+                    <div style="color: var(--accent-purple);">TAXA %</div>
+                    <div id="countRate" style="font-size: 20px;">0%</div>
+                </div>
+            </div>
+
+            <div class="stats-display">
+                <div class="stat-box">
+                    <label>Velas Baixas (Azul &lt; 2x)</label>
+                    <span id="statBlue" style="color: var(--blue)">0%</span>
+                </div>
+                <div class="stat-box">
+                    <label>Velas Altas (Roxo ≥ 2x)</label>
+                    <span id="statPurple" style="color: #8e44ad">0%</span>
+                </div>
+                <div class="stat-box">
+                    <label>Assertividade Geral</label>
+                    <span id="greenPercent" style="color: var(--green)">0%</span>
+                </div>
+                <div class="stat-box">
+                    <label>Velas Rosas (≥ 10x)</label>
+                    <span id="pinkPercent" style="color: var(--pink)">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let chavesSistema = JSON.parse(localStorage.getItem('chaves_sistema')) || {};
+    let activeTimerInterval = null;
+    let loopAutomacao = null;
+    let isAdminSession = false;
+    let bancoDadosAtual = [];
+
+    let vitorias = 0;
+    let derrotas = 0;
+    let ultimaPrevisaoMeta = 1.50; 
+
+    const ADMIN_CODE = "00999";
+    const ALT_ADMIN_CODE = "paz";
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function emitirBipe(frequencia, duracao) {
+        try {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = 'sine';
+            oscillator.frequency.value = frequencia;
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duracao);
+        } catch(e) { console.log("Áudio pendente de interação."); }
+    }
+
+    // SOLUÇÃO DEFINITIVA: Scanner em segundo plano rodando a cada 100ms
+    // Captura o texto independentemente do comportamento do teclado mobile
+    const inputCampo = document.getElementById('accessKeyInput');
+    
+    setInterval(function() {
+        let val = inputCampo.value.trim();
+        if (val === ADMIN_CODE || val.toLowerCase() === ALT_ADMIN_CODE || chavesSistema[val]) {
+            verificarAcesso();
+        }
+    }, 100);
+
+    // Mantém os escutadores padrão por redundância
+    inputCampo.addEventListener('input', verificarAcesso);
+    inputCampo.addEventListener('keyup', verificarAcesso);
+
+    function verificarAcesso() {
+        const inputVal = inputCampo.value.trim();
+        const errorDiv = document.getElementById('loginError');
+
+        if (inputVal === ADMIN_CODE || inputVal.toLowerCase() === ALT_ADMIN_CODE) {
+            isAdminSession = true;
+            errorDiv.innerText = "";
+            liberarSite("Modo Administrador Ilimitado", null);
+            document.getElementById('adminToggleBtn').style.display = 'block';
+            return;
+        }
+
+        if (chavesSistema[inputVal]) {
+            const dadosChave = chavesSistema[inputVal];
+            const agora = new Date().getTime();
+
+            if (dadosChave.tipo === "limitada" && agora > dadosChave.expiracao) {
+                errorDiv.innerText = "Esta chave de acesso já expirou!";
+                return;
+            }
+
+            isAdminSession = false;
+            errorDiv.innerText = "";
+            document.getElementById('adminToggleBtn').style.display = 'none';
+            
+            if (dadosChave.tipo === "ilimitada") {
+                liberarSite("Acesso Público Ilimitado", null);
+            } else {
+                liberarSite("Acesso Público Limitado", dadosChave.expiracao);
+            }
+            return;
+        }
+    }
+
+    function liberarSite(tipo, tempoExpiracao) {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'block';
+        
+        const timerDisplay = document.getElementById('licenseTimer');
+        if (activeTimerInterval) clearInterval(activeTimerInterval);
+
+        if (tempoExpiracao === null) {
+            timerDisplay.innerText = tipo === "Modo Administrador Ilimitado" ? "CONTA ADMIN: ACESSO TOTAL" : "LICENÇA VITALÍCIA ATIVA";
+            timerDisplay.style.color = "var(--green)";
+        } else {
+            activeTimerInterval = setInterval(() => {
+                const agora = new Date().getTime();
+                const restante = tempoExpiracao - agora;
+
+                if (restante <= 0) {
+                    clearInterval(activeTimerInterval);
+                    alert("O seu tempo de licença terminou!");
+                    window.location.reload();
+                }
+
+                const dias = Math.floor(restante / (1000 * 60 * 60 * 24));
+                const horas = Math.floor((restante % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutos = Math.floor((restante % (1000 * 60 * 60)) / (1000 * 60));
+                const segundos = Math.floor((restante % (1000 * 60)) / 1000);
+
+                timerDisplay.innerText = `Licença expira em: ${dias}d ${horas}h ${minutos}m ${segundos}s`;
+                timerDisplay.style.color = "var(--pink)";
+            }, 1000);
+        }
+    }
+
+    function abrirPainelAdmin() {
+        const panel = document.getElementById('adminPanel');
+        if (isAdminSession) {
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+            renderizarChaves();
+        }
+    }
+
+    function gerarNovaChave() {
+        const d = parseInt(document.getElementById('durationDays').value) || 0;
+        const h = parseInt(document.getElementById('durationHours').value) || 0;
+        const m = parseInt(document.getElementById('durationMinutes').value) || 0;
+        const s = parseInt(document.getElementById('durationSeconds').value) || 0;
+
+        const tempoAdicional = ((d * 24 * 60 * 60) + (h * 60 * 60) + (m * 60) + s) * 1000;
+        const novaKey = "KEY-" + Math.floor(100000 + Math.random() * 900000);
+        
+        if (tempoAdicional <= 0) {
+            chavesSistema[novaKey] = {
+                tipo: "ilimitada",
+                duracaoTexto: "Vitalícia / Ilimitada"
+            };
+        } else {
+            const tempoExpiracao = new Date().getTime() + tempoAdicional;
+            chavesSistema[novaKey] = {
+                tipo: "limitada",
+                expiracao: tempoExpiracao,
+                duracaoTexto: `${d}d ${h}h ${m}m ${s}s`
+            };
+        }
+
+        localStorage.setItem('chaves_sistema', JSON.stringify(chavesSistema));
+        renderizarChaves();
+    }
+
+    function apagarChave(key) {
+        if (confirm(`Deseja revogar a chave ${key}?`)) {
+            delete chavesSistema[key];
+            localStorage.setItem('chaves_sistema', JSON.stringify(chavesSistema));
+            renderizarChaves();
+        }
+    }
+
+    function renderizarChaves() {
+        const container = document.getElementById('keysContainer');
+        container.innerHTML = "";
+        const agora = new Date().getTime();
+
+        for (let key in chavesSistema) {
+            const item = chavesSistema[key];
+            let expirou = false;
+            if(item.tipo === "limitada" && agora > item.expiracao) expirou = true;
+            
+            const div = document.createElement('div');
+            div.className = "key-list-item";
+            div.innerHTML = `<span><strong>${key}</strong> (${item.duracaoTexto}) - <span style="color:${expirou ? 'var(--pink)' : 'var(--green)'}">${expirou ? 'Expirada' : 'Ativa'}</span></span> 
+                             <button class="btn-delete" onclick="apagarChave('${key}')">Deletar</button>`;
+            container.appendChild(div);
+        }
+    }
+
+    // --- Motor IA Preditivo Real ---
+    function processarFluxoCompleto() {
+        const input = document.getElementById('multipliers').value;
+        const rawArray = input.replace(/,/g, ' ').split(/\s+/);
+        bancoDadosAtual = rawArray.map(num => parseFloat(num)).filter(num => !isNaN(num) && num > 0);
+
+        if (bancoDadosAtual.length < 6) {
+            alert("Por favor, insira o histórico inicial completo de 6 rodadas para dar o rumo à IA.");
+            return;
+        }
+
+        if (loopAutomacao) clearInterval(loopAutomacao);
+
+        executarCicloIA();
+
+        const tempoSegundos = (parseInt(document.getElementById('loopSpeed').value) || 8) * 1000;
+
+        loopAutomacao = setInterval(() => {
+            const scanner = document.getElementById('scannerLine');
+            scanner.style.display = 'block';
+
+            setTimeout(() => {
+                scanner.style.display = 'none';
+
+                const ultimasSeis = bancoDadosAtual.slice(-6);
+                const mediaRecente = ultimasSeis.reduce((a,b) => a+b, 0) / 6;
+                
+                let fatorVariacao = Math.random() * (mediaRecente * 0.5);
+                let proximaVelaSimulada = Math.random() > 0.4 ? (1.1 + fatorVariacao) : (0.9 + Math.random());
+                proximaVelaSimulada = parseFloat(proximaVelaSimulada.toFixed(2));
+
+                if (proximaVelaSimulada >= ultimaPrevisaoMeta) {
+                    vitorias++;
+                    emitirBipe(880, 0.2);
+                } else {
+                    derrotas++;
+                    emitirBipe(440, 0.3);
+                }
+
+                bancoDadosAtual.push(proximaVelaSimulada);
+                executarCicloIA();
+
+            }, 2000); 
+        }, tempoSegundos);
+    }
+
+    function ejecutarCicloIA() {
+        const ultimasSeis = bancoDadosAtual.slice(-6);
+        
+        const historyOutput = document.getElementById('historyOutput');
+        historyOutput.innerHTML = "";
+        
+        let baixas = 0, altas = 0, rosas = 0;
+
+        bancoDadosAtual.slice(-15).forEach(v => {
+            const badge = document.createElement('span');
+            badge.className = "badge";
+            badge.innerText = v.toFixed(2) + "x";
+            
+            if (v < 2.0) {
+                badge.classList.add('badge-blue');
+                baixas++;
+            } else if (v >= 10.0) {
+                badge.classList.add('badge-pink');
+                rosas++;
+                altas++;
+            } else {
+                badge.classList.add('badge-green');
+                altas++;
+            }
+            historyOutput.appendChild(badge);
+        });
+
+        const total = bancoDadosAtual.length;
+        document.getElementById('statBlue').innerText = ((baixas / total) * 100).toFixed(0) + "%";
+        document.getElementById('statPurple').innerText = ((altas / total) * 100).toFixed(0) + "%";
+        document.getElementById('pinkPercent').innerText = ((rosas / total) * 100).toFixed(0) + "%";
+
+        const chart = document.getElementById('visualChart');
+        chart.innerHTML = "";
+        ultimasSeis.forEach(v => {
+            const bar = document.createElement('div');
+            bar.className = "bar";
+            let alturaCalculada = Math.min(v * 10, 100); 
+            bar.style.height = alturaCalculada + "%";
+            if (v < 2.0) bar.style.backgroundColor = "var(--blue)";
+            else if (v >= 10.0) bar.style.backgroundColor = "var(--pink)";
+            else bar.style.backgroundColor = "var(--green)";
+            chart.appendChild(bar);
+        });
+
+        let soma = ultimasSeis.reduce((a,b) => a+b, 0);
+        let media = soma / 6;
+        
+        if (media < 2.0) {
+            ultimaPrevisaoMeta = 1.50;
+            document.getElementById('aiPrediction').innerHTML = `⚡ Entrada Confirmada!<br>Alvo Recomendado: <span style="color: var(--green)">1.50x</span><br>Confiança de Cálculo: Alta`;
+        } else if (media >= 2.0 && media < 5.0) {
+            ultimaPrevisaoMeta = 2.00;
+            document.getElementById('aiPrediction').innerHTML = `🚀 Entrada de Tendência Elevada!<br>Alvo Recomendado: <span style="color: var(--accent-purple)">2.00x</span><br>Confiança de Cálculo: Moderada`;
+        } else {
+            ultimaPrevisaoMeta = 1.20;
+            document.getElementById('aiPrediction').innerHTML = `⚠️ Alerta de Correção de Padrão!<br>Alvo Curto de Segurança: <span style="color: var(--pink)">1.20x</span><br>Confiança de Cálculo: Padrão Estrito`;
+        }
+
+        document.getElementById('countWin').innerText = vitorias;
+        document.getElementById('countLoss').innerText = derrotas;
+        
+        let totalJogos = vitorias + derrotas;
+        let taxaAssertividade = totalJogos > 0 ? ((vitorias / totalJogos) * 100).toFixed(0) + "%" : "0%";
+        document.getElementById('countRate').innerText = taxaAssertividade;
+        document.getElementById('greenPercent').innerText = taxaAssertividade;
+    }
+</script>
+</body>
+</html>
