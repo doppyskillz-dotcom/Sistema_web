@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Análise Estatística</title>
+    <style>
+        :root {
+            --bg-color: #0b0e14;
+            --card-bg: #151a24;
+            --accent-purple: #9146ff;
+            --text-color: #ffffff;
+            --gray-text: #8a96a3;
+            --green: #00e676;
+            --pink: #ff007f;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--accent-purple);
+            margin-bottom: 5px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--gray-text);
+        }
+
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #2a3447;
+            background-color: #1c2331;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: var(--accent-purple);
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #772ce8;
+        }
+
+        .stats-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-box {
+            background-color: #1c2331;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-box span {
+            display: block;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .badge-blue { background-color: #3498db; }
+        .badge-green { background-color: var(--green); color: #000; }
+        .badge-pink { background-color: var(--pink); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Analisador Estatístico de Tendências</h1>
+        <p style="color: var(--gray-text)">Insira os dados recentes para extrair padrões de volatilidade</p>
+    </header>
+
+    <div class="grid">
+        <div class="card">
+            <h2>Entrada de Sequência</h2>
+            <div class="form-group">
+                <label for="multipliers">Cole os últimos multiplicadores (separados por espaço ou vírgula):</label>
+                <textarea id="multipliers" rows="4" placeholder="Ex: 1.25, 2.40, 1.05, 14.50, 1.80, 102.30"></textarea>
+            </div>
+            <button onclick="analisarDados()">Processar e Analisar</button>
+
+            <h3 style="margin-top: 25px;">Histórico Visual</h3>
+            <div id="historyOutput" class="history-list">
+                </div>
+        </div>
+
+        <div class="card">
+            <h2>Métricas de Volatilidade</h2>
+            <p style="color: var(--gray-text)">Comportamento da amostragem atual:</p>
+            
+            <div class="stats-display">
+                <div class="stat-box">
+                    <label>Total de Rodadas</label>
+                    <span id="totalRounds">0</span>
+                </div>
+                <div class="stat-box">
+                    <label>Média Geral</label>
+                    <span id="averageMult" style="color: var(--accent-purple)">0.00x</span>
+                </div>
+                <div class="stat-box">
+                    <label>Velas ≥ 2.00x (Assertividade)</label>
+                    <span id="greenPercent" style="color: var(--green)">0%</span>
+                </div>
+                <div class="stat-box">
+                    <label>Velas Rosas (≥ 10.00x)</label>
+                    <span id="pinkPercent" style="color: var(--pink)">0%</span>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 25px;">Alerta de Tendência</h3>
+            <div id="trendAlert" style="background-color: #1c2331; padding: 15px; border-radius: 6px; border-left: 4px solid var(--gray-text);">
+                Aguardando inserção de dados para gerar relatório de ciclos.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function analisarDados() {
+        const input = document.getElementById('multipliers').value;
+        // Trata a string para aceitar espaços, vírgulas ou quebras de linha e converter para números
+        const rawArray = input.replace(/,/g, ' ').split(/\s+/);
+        const data = rawArray.map(num => parseFloat(num)).filter(num => !isNaN(num) && num > 0);
+
+        if (data.length === 0) {
+            alert("Por favor, insira valores válidos.");
+            return;
+        }
+
+        // Variáveis de contagem
+        let total = data.length;
+        let sum = 0;
+        let greens = 0;
+        let pinks = 0;
+
+        // Limpa o histórico visual antigo
+        const historyOutput = document.getElementById('historyOutput');
+        historyOutput.innerHTML = '';
+
+        // Processa cada multiplicador
+        data.forEach(val => {
+            sum += val;
+            
+            // Criar badge visual
+            const badge = document.createElement('span');
+            badge.classList.add('badge');
+            badge.innerText = val.toFixed(2) + 'x';
+
+            if (val >= 10.0) {
+                pinks++;
+                badge.classList.add('badge-pink');
+            } else if (val >= 2.0) {
+                greens++;
+                badge.classList.add('badge-green');
+            } else {
+                badge.classList.add('badge-blue');
+            }
+            historyOutput.appendChild(badge);
+        });
+
+        // Cálculos estatísticos
+        const avg = sum / total;
+        const greenPct = (greens / total) * 100;
+        const pinkPct = (pinks / total) * 100;
+
+        // Atualiza a tela
+        document.getElementById('totalRounds').innerText = total;
+        document.getElementById('averageMult').innerText = avg.toFixed(2) + 'x';
+        document.getElementById('greenPercent').innerText = greenPct.toFixed(1) + '%';
+        document.getElementById('pinkPercent').innerText = pinkPct.toFixed(1) + '%';
+
+        // Lógica de Alerta de Tendência (Padrões de Ciclo)
+        const trendAlert = document.getElementById('trendAlert');
+        if (greenPct < 45) {
+            trendAlert.style.borderLeftColor = "#ff3333";
+            trendAlert.innerHTML = "<strong>Tendência: Baixa (Gráfico em Recuperação).</strong> O percentual de velas maiores que 2x está abaixo da média estatística padrão. Risco alto de sequências de velas azuis.";
+        } else if (greenPct >= 45 && greenPct <= 55) {
+            trendAlert.style.borderLeftColor = var(--green);
+            trendAlert.innerHTML = "<strong>Tendência: Normalizada.</strong> O padrão está seguindo a distribuição matemática padrão. Bom momento para estratégias de proteção fixa em 1.50x.";
+        } else {
+            trendAlert.style.borderLeftColor = var(--pink);
+            trendAlert.innerHTML = "<strong>Tendência: Alta (Surfe de Velas).</strong> O mercado está pagando acima da média. Probabilidade momentânea maior para buscar alvos longos, mas atenção ao fechamento repentino do ciclo.";
+        }
+    }
+</script>
+
+</body>
+</html>
